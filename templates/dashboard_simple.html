@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Zomato Insights</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <style>
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="home.html">
+        <img src="../images/home-icon.png" class="home-icon" alt="Home">
+    </a>
+
+    <h1 class="main-title">
+        zomato <span class="sub-title-bold">BANGALORE</span>
+    </h1>
+    <h2 class="script-sub">insights dashboard</h2>
+
+    <div id="loading" class="loading">Loading dashboard data...</div>
+
+    <div id="dashboard-content" style="display: none;">
+        <div style="text-align: center; margin-top: 20px;">
+            <div class="section-title">summary statistics</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="dashboard-card">
+                <div class="inner-dark">
+                    <div class="stat-label">total restaurants</div>
+                    <div class="stat-value" id="total-records">-</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="inner-light">
+                    <div class="stat-label">average rating</div>
+                    <div class="stat-value" id="avg-rating">-</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="inner-dark">
+                    <div class="stat-label">total votes</div>
+                    <div class="stat-value" id="total-votes">-</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="inner-light">
+                    <div class="stat-label">avg cost (for 2)</div>
+                    <div class="stat-value" id="avg-cost">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <div class="section-title">top insights</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="chart-card">
+                <div class="inner-dark">
+                    <div style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0;">Most Common Location</h3>
+                        <div class="stat-value" id="top-location" style="font-size: 24px;">-</div>
+                        <div id="location-count" style="margin-top: 10px; opacity: 0.8;">-</div>
+                    </div>
+                </div>
+                <button class="chart-btn">location analysis</button>
+            </div>
+
+            <div class="chart-card">
+                <div class="inner-light">
+                    <div style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #003d3c;">Most Popular Cuisine</h3>
+                        <div class="stat-value" id="top-cuisine" style="font-size: 24px; color: #003d3c;">-</div>
+                        <div id="cuisine-count" style="margin-top: 10px; opacity: 0.8; color: #003d3c;">-</div>
+                    </div>
+                </div>
+                <button class="chart-btn">cuisine breakdown</button>
+            </div>
+
+            <div class="chart-card">
+                <div class="inner-dark">
+                    <div style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0;">Online Ordering</h3>
+                        <div class="stat-value" id="online-percent" style="font-size: 24px;">-</div>
+                        <div style="margin-top: 10px; opacity: 0.8;">restaurants offer online ordering</div>
+                    </div>
+                </div>
+                <button class="chart-btn">ordering stats</button>
+            </div>
+
+            <div class="chart-card">
+                <div class="inner-light">
+                    <div style="padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #003d3c;">Table Booking</h3>
+                        <div class="stat-value" id="booking-percent" style="font-size: 24px; color: #003d3c;">-</div>
+                        <div style="margin-top: 10px; opacity: 0.8; color: #003d3c;">restaurants offer table booking
+                        </div>
+                    </div>
+                </div>
+                <button class="chart-btn">booking stats</button>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <div class="section-title">rating distribution</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="chart-card" style="width: 90%; max-width: 800px;">
+                <div class="inner-dark">
+                    <div style="padding: 20px;">
+                        <div id="rating-bars"
+                            style="display: flex; align-items: flex-end; justify-content: space-around; height: 200px;">
+                            <!-- Rating bars will be inserted here -->
+                        </div>
+                        <div id="rating-labels"
+                            style="display: flex; justify-content: space-around; margin-top: 10px; font-size: 12px;">
+                            <!-- Rating labels will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                <button class="chart-btn">rating analysis</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch('http://localhost:5000/api/simple-dashboard-stats');
+
+                if (!response.ok) {
+                    throw new Error('Failed to load data');
+                }
+
+                const data = await response.json();
+
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+
+                // Update summary cards
+                document.getElementById('total-records').textContent = data.total_records.toLocaleString();
+                document.getElementById('avg-rating').textContent = data.avg_rating + '/5';
+                document.getElementById('total-votes').textContent = data.total_votes.toLocaleString();
+                document.getElementById('avg-cost').textContent = '₹' + data.avg_cost;
+
+                // Update insights
+                document.getElementById('top-location').textContent = data.top_location.name;
+                document.getElementById('location-count').textContent = data.top_location.count + ' restaurants';
+
+                document.getElementById('top-cuisine').textContent = data.top_cuisine.name;
+                document.getElementById('cuisine-count').textContent = data.top_cuisine.count + ' restaurants';
+
+                document.getElementById('online-percent').textContent = data.online_order_percent + '%';
+                document.getElementById('booking-percent').textContent = data.table_booking_percent + '%';
+
+                // Create rating distribution bars
+                createRatingBars(data.rating_distribution);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML =
+                    '<p style="color: #ff6b6b;">Error loading dashboard data.</p>' +
+                    '<p>Make sure the Flask server is running.</p>';
+            }
+        }
+
+        function createRatingBars(distribution) {
+            const barsContainer = document.getElementById('rating-bars');
+            const labelsContainer = document.getElementById('rating-labels');
+
+            const maxCount = Math.max(...Object.values(distribution));
+
+            for (const [rating, count] of Object.entries(distribution).sort()) {
+                // Create bar
+                const barWrapper = document.createElement('div');
+                barWrapper.style.flex = '1';
+                barWrapper.style.display = 'flex';
+                barWrapper.style.flexDirection = 'column';
+                barWrapper.style.alignItems = 'center';
+                barWrapper.style.justifyContent = 'flex-end';
+
+                const bar = document.createElement('div');
+                const height = (count / maxCount) * 180;
+                bar.style.width = '40px';
+                bar.style.height = height + 'px';
+                bar.style.background = 'linear-gradient(to top, #00d4aa, #00a896)';
+                bar.style.borderRadius = '4px 4px 0 0';
+                bar.style.transition = 'all 0.3s';
+                bar.title = count + ' restaurants';
+
+                barWrapper.appendChild(bar);
+                barsContainer.appendChild(barWrapper);
+
+                // Create label
+                const label = document.createElement('div');
+                label.textContent = rating;
+                label.style.flex = '1';
+                label.style.textAlign = 'center';
+                labelsContainer.appendChild(label);
+            }
+        }
+
+        // Load dashboard when page loads
+        window.addEventListener('load', loadDashboard);
+    </script>
+</body>
+
+</html>

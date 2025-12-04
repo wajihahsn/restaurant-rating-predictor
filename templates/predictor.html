@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rating Predictor</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+
+<body>
+    <a href="home.html">
+        <img src="../images/home-icon.png" class="home-icon" alt="Home">
+    </a>
+
+    <h1 class="main-title">
+        zomato <span class="sub-title-bold">BANGALORE</span>
+    </h1>
+    <h2 class="script-sub">rating predictor</h2>
+
+    <div class="predictor-row">
+
+        <!-- LEFT BOX -->
+        <div class="predict-box">
+
+            <input id="res_name" type="text" class="predict-input" placeholder="Restaurant Name">
+
+            <!-- LOCATION -->
+            <select id="location" class="predict-input">
+                <option selected disabled>Location</option>
+                <option value="0">BTM</option>
+                <option value="1">HSR</option>
+                <option value="2">Koramangala</option>
+                <option value="3">Indiranagar</option>
+                <option value="4">Whitefield</option>
+                <option value="5">Jayanagar</option>
+                <option value="6">Marathahalli</option>
+                <option value="7">Electronic City</option>
+                <option value="8">JP Nagar</option>
+                <option value="9">Banashankari</option>
+                <option value="10">Malleshwaram</option>
+                <option value="11">Rajajinagar</option>
+                <option value="12">Yelahanka</option>
+                <option value="13">Hebbal</option>
+                <option value="14">MG Road</option>
+                <option value="15">Brigade Road</option>
+                <option value="16">Church Street</option>
+                <option value="17">Residency Road</option>
+                <option value="18">Basavanagudi</option>
+                <option value="19">Sarjapur Road</option>
+                <option value="20">Bellandur</option>
+                <option value="21">Outer Ring Road</option>
+                <option value="22">Bannerghatta Road</option>
+                <option value="23">Kalyan Nagar</option>
+                <option value="24">RT Nagar</option>
+                <option value="25">Frazer Town</option>
+                <option value="26">CV Raman Nagar</option>
+                <option value="27">Old Airport Road</option>
+                <option value="28">Domlur</option>
+                <option value="29">Cunningham Road</option>
+                <option value="30">Lavelle Road</option>
+            </select>
+
+            <!-- CUISINES -->
+            <select id="cuisines" class="predict-input">
+                <option selected disabled>Cuisines</option>
+                <option value="North Indian, Mughlai, Chinese">North Indian, Mughlai, Chinese</option>
+                <option value="Chinese, North Indian, Thai">Chinese, North Indian, Thai</option>
+                <option value="Cafe, Mexican, Italian">Cafe, Mexican, Italian</option>
+            </select>
+
+            <input id="approx_cost" type="text" class="predict-input" placeholder="Cost for Two">
+
+            <!-- RESTAURANT TYPE -->
+            <select id="rest_type" class="predict-input">
+                <option selected disabled>Restaurant Type</option>
+                <option value="Cafe">Cafe</option>
+                <option value="Casual Dining">Casual Dining</option>
+                <option value="Fine Dining">Fine Dining</option>
+            </select>
+
+            <input id="votes" type="text" class="predict-input" placeholder="Votes">
+
+            <div class="toggle-row">
+                <label>Has Online Order?</label>
+                <label class="switch">
+                    <input type="checkbox" id="online-order">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <label>Has Table Booking?</label>
+                <label class="switch">
+                    <input type="checkbox" id="table-booking">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <button id="predictBtn" class="predict-input" style="cursor:pointer;">Predict</button>
+
+        </div>
+
+        <!-- RIGHT BOX -->
+        <div class="predict-box">
+            <div class="pred-title">RATING PREDICTION</div>
+            <div class="pred-sub">Output</div>
+
+            <div id="output1" class="output-box"></div>
+            <div id="output2" class="output-box-light"></div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById("predictBtn").addEventListener("click", async () => {
+            // Collect input values
+            const data = {
+                location: parseInt(document.getElementById("location").value) || 0,
+                approx_cost: parseFloat(document.getElementById("approx_cost").value) || 0,
+                votes: parseInt(document.getElementById("votes").value) || 0,
+                online_order: document.getElementById("online-order").checked ? 1 : 0,
+                book_table: document.getElementById("table-booking").checked ? 1 : 0
+            };
+
+            // Validation
+            if (!document.getElementById("location").value) {
+                alert("Please select a location!");
+                return;
+            }
+            if (!document.getElementById("approx_cost").value || parseFloat(document.getElementById("approx_cost").value) <= 0) {
+                alert("Please enter a valid cost!");
+                return;
+            }
+            if (!document.getElementById("votes").value || parseInt(document.getElementById("votes").value) < 0) {
+                alert("Please enter a valid vote count!");
+                return;
+            }
+
+            console.log("Sending data:", data);
+
+            try {
+                // Send data to Flask
+                const res = await fetch("http://127.0.0.1:5000/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                console.log("Response status:", res.status);
+                const result = await res.json();
+                console.log("Response data:", result);
+
+                if (!res.ok) {
+                    alert("Error: " + (result.error || "Unknown error"));
+                    return;
+                }
+
+                // Display rating
+                document.getElementById("output1").innerHTML = result.rating;
+
+                // Display remark with color
+                const output2 = document.getElementById("output2");
+                output2.innerHTML = result.remark;
+
+                // Reset classes
+                output2.className = "output-box-light";
+
+                if (result.remark.includes("Excellent")) {
+                    output2.classList.add("excellent");
+                } else if (result.remark.includes("Good")) {
+                    output2.classList.add("good");
+                } else if (result.remark.includes("Average")) {
+                    output2.classList.add("average");
+                } else {
+                    output2.classList.add("poor");
+                }
+
+                // Trigger fade-in animation
+                output2.style.animation = "fadeIn 0.5s ease";
+
+            } catch (err) {
+                console.error("Fetch error:", err);
+                alert("Error: " + err.message);
+            }
+        });
+    </script>
+
+
+</body>
+
+</html>
